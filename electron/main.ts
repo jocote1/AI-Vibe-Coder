@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
 import path from 'path';
 import fs from 'fs';
-import archiver from 'archiver';
+import { execFile, exec } from 'child_process';
 import { SecureStorageManager } from './secure-storage.js';
 import { OAuthHandler } from './oauth-handler.js';
 import { PtyManager } from './pty-manager.js';
@@ -232,42 +232,50 @@ ipcMain.handle('builder:export-zip', async (_, sourceDir: string, targetZipPath?
     const defaultExportName = `${path.basename(sourceDir)}-export-${Date.now()}.zip`;
     const outputPath = targetZipPath || path.join(path.dirname(sourceDir), defaultExportName);
 
-    const output = fs.createWriteStream(outputPath);
-    const archive = archiver('zip', { zlib: { level: 9 } });
-
+    // Cross-platform native zero-dependency zip
     return new Promise((resolve) => {
-      output.on('close', () => {
-        resolve({ success: true, outputPath });
-      });
+      const isWin = process.platform === 'win32';
 
-      archive.on('error', (err) => {
-        resolve({ success: false, outputPath, error: err.message });
-      });
-
-      archive.pipe(output);
-
-      // Add files ignoring junk
-      archive.glob('**/*', {
-        cwd: sourceDir,
-        ignore: [
-          'node_modules/**',
-          '.git/**',
-          'dist/**',
-          'dist-electron/**',
-          '.idea/**',
-          '.vscode/**',
-          '__pycache__/**',
-          '.next/**',
-          'target/**',
-          'build/**',
-          '.gradle/**',
-          '.env*',
+      if (isWin) {
+        // PowerShell Compress-Archive on Windows
+        const psCommand = `powershell -NoProfile -NonInteractive -Command "Compress-Archive -Path '${sourceDir}\\*' -DestinationPath '${outputPath}' -Force"`;
+        exec(psCommand, (err) => {
+          if (err) {
+            resolve({ success: false, outputPath, error: err.message });
+          } else {
+            resolve({ success: true, outputPath });
+          }
+        });
+      } else {
+        // Native zip on macOS and Linux
+        const zipArgs = [
+          '-r',
+          '-q',
+          outputPath,
+          '.',
+          '-x',
+          'node_modules/*',
+          '.git/*',
+          'dist/*',
+          'dist-electron/*',
+          '.idea/*',
+          '.vscode/*',
+          '__pycache__/*',
+          '.next/*',
+          'target/*',
+          'build/*',
+          '.gradle/*',
           '*.zip',
-        ],
-        dot: true,
-      });
+        ];
 
-      archive.finalize();
+        execFile('zip', zipArgs, { cwd: sourceDir }, (err) => {
+          if (err) {
+            resolve({ success: false, outputPath, error: err.message });
+          } else {
+            resolve({ success: true, outputPath });
+          }
+        });
+      }
     });
   } catch (err: any) {
     return { success: false, outputPath: '', error: err.message };

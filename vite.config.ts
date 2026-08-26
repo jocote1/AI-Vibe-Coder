@@ -14,7 +14,7 @@ export default defineConfig({
           build: {
             outDir: 'dist-electron',
             rollupOptions: {
-              external: ['electron', 'archiver', 'node-pty', 'crypto', 'http', 'child_process', 'fs', 'path', 'os', 'url'],
+              external: ['electron'],
             },
           },
         },
