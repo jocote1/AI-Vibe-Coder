@@ -1,0 +1,55 @@
+/**
+ * @see https://www.electron.build/configuration/configuration
+ */
+{
+  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  "appId": "com.vibestudio.app",
+  "productName": "Vibe Studio",
+  "directories": {
+    "output": "release/${version}"
+  },
+  "files": [
+    "dist",
+    "dist-electron"
+  ],
+  "mac": {
+    "target": [
+      "dmg",
+      "zip"
+    ],
+    "category": "public.app-category.developer-tools",
+    "artifactName": "${productName}-${version}-Mac-${arch}.${ext}"
+  },
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64",
+          "ia32"
+        ]
+      },
+      {
+        "target": "portable",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "artifactName": "${productName}-${version}-Setup-${arch}.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true
+  },
+  "linux": {
+    "target": [
+      "AppImage",
+      "deb"
+    ],
+    "category": "Development",
+    "artifactName": "${productName}-${version}-Linux-${arch}.${ext}"
+  }
+}
