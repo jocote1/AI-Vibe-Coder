@@ -42,19 +42,19 @@ jobs:
 
       - name: Build & Package Desktop Application (Windows)
         if: startsWith(matrix.os, 'windows')
-        run: npx electron-builder --win --x64
+        run: npx electron-builder --win --x64 --config electron-builder.json5
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build & Package Desktop Application (macOS)
         if: startsWith(matrix.os, 'macos')
-        run: npx electron-builder --mac --universal
+        run: npx electron-builder --mac --universal --config electron-builder.json5
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build & Package Desktop Application (Linux)
         if: startsWith(matrix.os, 'ubuntu')
-        run: npx electron-builder --linux --x64
+        run: npx electron-builder --linux --x64 --config electron-builder.json5
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -62,7 +62,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: release/**/*
+          files: |
+            release/**/*.exe
+            release/**/*.dmg
+            release/**/*.zip
+            release/**/*.AppImage
+            release/**/*.deb
           draft: false
           prerelease: false
           generate_release_notes: true
