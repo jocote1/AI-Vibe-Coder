@@ -128,12 +128,17 @@ export class AutonomousAgentRuntime {
           callbacks.onToolCallComplete?.(toolCall);
           executedToolCalls.push(toolCall);
 
+          let contentStr = typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult, null, 2);
+          if (contentStr.length > 20000) {
+            contentStr = contentStr.slice(0, 20000) + '\n... [Remaining content truncated for context limit safety]';
+          }
+
           // Append tool response to message history
           this.messages.push({
             role: 'tool',
             name: toolCall.name,
             tool_call_id: toolCall.id,
-            content: typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult, null, 2),
+            content: contentStr,
           });
         } catch (err: any) {
           const errMsg = err.message || 'Unknown tool execution error';
@@ -159,6 +164,21 @@ export class AutonomousAgentRuntime {
     };
   }
 
+  private formatAsciiTree(nodes: any[], indent = ''): string {
+    let result = '';
+    for (const node of nodes) {
+      if (node.isDirectory) {
+        result += `${indent}📁 ${node.name}/\n`;
+        if (node.children && node.children.length > 0) {
+          result += this.formatAsciiTree(node.children, indent + '  ');
+        }
+      } else {
+        result += `${indent}📄 ${node.name}\n`;
+      }
+    }
+    return result;
+  }
+
   /**
    * Dispatches tool execution to Electron native layer or browser simulation
    */
@@ -169,9 +189,13 @@ export class AutonomousAgentRuntime {
       case 'read_directory_tree': {
         const targetPath = params.path ? this.resolvePath(params.path) : this.projectDir;
         if (api) {
-          return await api.readDirectoryTree(targetPath, params.max_depth || 4);
+          const rawTree = await api.readDirectoryTree(targetPath, params.max_depth || 3);
+          if (!rawTree || rawTree.length === 0) {
+            return `Project workspace (${this.projectDir || 'workspace'}) is currently empty. Ready to create files with write_file.`;
+          }
+          return `Project Workspace Structure:\n` + this.formatAsciiTree(rawTree);
         }
-        return [{ name: 'src', isDirectory: true }, { name: 'package.json', isDirectory: false }];
+        return `Project workspace is currently empty. Ready to create files with write_file.`;
       }
 
       case 'read_file': {

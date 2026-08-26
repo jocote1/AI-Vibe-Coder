@@ -51,6 +51,11 @@ export const App: React.FC = () => {
 
           const osKeychainAvailable = await window.electronAPI.secureStorage.isOsKeychain();
           setIsOsKeychain(osKeychainAvailable);
+
+          const defaultWorkspace = await window.electronAPI.getDefaultWorkspace();
+          if (defaultWorkspace) {
+            setProjectDir(defaultWorkspace);
+          }
         } catch (e) {
           console.warn('Failed to load secure keys from Electron storage:', e);
         }

@@ -25,8 +25,9 @@ export interface BuildProgress {
 }
 
 const electronAPI = {
-  // Dialogs
+  // Dialogs & Workspace
   openDirectory: (): Promise<string | null> => ipcRenderer.invoke('dialog:open-directory'),
+  getDefaultWorkspace: (): Promise<string> => ipcRenderer.invoke('workspace:get-default'),
   
   // File System
   readFile: (filePath: string): Promise<string> => ipcRenderer.invoke('fs:read-file', filePath),

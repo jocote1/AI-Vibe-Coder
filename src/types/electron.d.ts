@@ -24,6 +24,7 @@ export interface BuildProgress {
 
 export interface ElectronAPI {
   openDirectory: () => Promise<string | null>;
+  getDefaultWorkspace: () => Promise<string>;
   readFile: (filePath: string) => Promise<string>;
   writeFile: (filePath: string, content: string) => Promise<{ success: boolean; error?: string }>;
   readDirectoryTree: (dirPath: string, maxDepth?: number) => Promise<FileNode[]>;

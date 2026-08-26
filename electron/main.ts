@@ -112,6 +112,20 @@ ipcMain.handle('fs:apply-patch-diff', async (_, filePath: string, searchChunk: s
   }
 });
 
+// Workspace Helper
+ipcMain.handle('workspace:get-default', async () => {
+  try {
+    const homeDir = app.getPath('home');
+    const defaultDir = path.join(homeDir, 'VibeProjects', 'my-vibe-app');
+    if (!fs.existsSync(defaultDir)) {
+      await fs.promises.mkdir(defaultDir, { recursive: true });
+    }
+    return defaultDir;
+  } catch (err) {
+    return app.getPath('userData');
+  }
+});
+
 interface FileNode {
   name: string;
   path: string;
@@ -121,19 +135,33 @@ interface FileNode {
   children?: FileNode[];
 }
 
-ipcMain.handle('fs:read-directory-tree', async (_, dirPath: string, maxDepth = 4) => {
-  const IGNORE_PATTERNS = new Set(['node_modules', '.git', 'dist', 'dist-electron', '.idea', '.vscode', '__pycache__', '.next', 'target', 'build', '.gradle']);
+ipcMain.handle('fs:read-directory-tree', async (_, dirPath: string, maxDepth = 3) => {
+  if (!dirPath || dirPath === '/' || dirPath === '.' || dirPath === '/Applications' || dirPath === app.getPath('home')) {
+    return [];
+  }
+
+  const IGNORE_PATTERNS = new Set([
+    'node_modules', '.git', 'dist', 'dist-electron', '.idea', '.vscode', 
+    '__pycache__', '.next', 'target', 'build', '.gradle', 'release', 
+    'Library', 'Applications', 'System', '.Trash'
+  ]);
+
+  let totalCount = 0;
+  const MAX_TOTAL_NODES = 80;
 
   async function traverse(currentDir: string, depth: number): Promise<FileNode[]> {
-    if (depth > maxDepth) return [];
+    if (depth > maxDepth || totalCount >= MAX_TOTAL_NODES) return [];
     try {
       const entries = await fs.promises.readdir(currentDir, { withFileTypes: true });
       const nodes: FileNode[] = [];
 
       for (const entry of entries) {
-        if (IGNORE_PATTERNS.has(entry.name)) continue;
+        if (totalCount >= MAX_TOTAL_NODES) break;
+        if (IGNORE_PATTERNS.has(entry.name) || entry.name.startsWith('.')) continue;
+
         const fullPath = path.join(currentDir, entry.name);
         const relPath = path.relative(dirPath, fullPath);
+        totalCount++;
 
         if (entry.isDirectory()) {
           const children = await traverse(fullPath, depth + 1);
@@ -160,7 +188,6 @@ ipcMain.handle('fs:read-directory-tree', async (_, dirPath: string, maxDepth = 4
         }
       }
 
-      // Sort directories first, then alphabetically
       return nodes.sort((a, b) => {
         if (a.isDirectory === b.isDirectory) {
           return a.name.localeCompare(b.name);
