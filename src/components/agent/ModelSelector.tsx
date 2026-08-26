@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AVAILABLE_MODELS } from '../../lib/ai/provider-router';
-import { Sparkles, ChevronDown, Check, Zap, Cpu, ShieldCheck } from 'lucide-react';
+import { ChevronDown, Check, Zap, Cpu, Key } from 'lucide-react';
 
 interface ModelSelectorProps {
   selectedModelId: string;
@@ -19,7 +19,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
   const currentModel = AVAILABLE_MODELS.find((m) => m.id === selectedModelId) || AVAILABLE_MODELS[0];
 
-  const getProviderBadge = (provider: string) => {
+  const getProviderTag = (provider: string) => {
     switch (provider) {
       case 'gemini':
         return { label: 'Google AI Studio', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' };
@@ -42,11 +42,11 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-card/80 border border-border hover:border-primary/40 transition-all text-xs font-medium text-gray-200 hover:text-white shadow-sm"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/40 hover:bg-white/[0.04] border border-white/[0.08] hover:border-white/[0.15] transition-all text-xs font-medium text-gray-200 hover:text-white shadow-sm"
       >
-        <Sparkles className="w-3.5 h-3.5 text-neon-cyan animate-pulse" />
-        <span className="truncate max-w-[140px] font-semibold">{currentModel.name}</span>
-        <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/20 text-primary border border-primary/30">
+        <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+        <span className="truncate max-w-[130px] font-semibold">{currentModel.name}</span>
+        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-white/[0.06] text-gray-300 font-mono">
           {currentModel.speed}
         </span>
         <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
@@ -55,17 +55,17 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 mt-2 w-96 max-h-[460px] overflow-y-auto z-50 rounded-xl bg-card border border-border shadow-2xl p-2.5 backdrop-blur-xl">
-            <div className="flex items-center justify-between pb-2 mb-2 border-b border-border/80 px-1">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Universal Model Hub</span>
+          <div className="absolute right-0 mt-2 w-96 max-h-[460px] overflow-y-auto z-50 rounded-2xl glass-panel p-2.5 shadow-2xl border border-white/[0.1]">
+            <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/[0.06] px-1.5">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Universal Model Hub</span>
               <button
                 onClick={() => {
                   setIsOpen(false);
                   onOpenSettings();
                 }}
-                className="text-[11px] text-neon-cyan hover:underline flex items-center gap-1"
+                className="text-[11px] text-cyan-400 hover:underline flex items-center gap-1 font-medium"
               >
-                <ShieldCheck className="w-3 h-3" />
+                <Key className="w-3 h-3" />
                 Manage Keys
               </button>
             </div>
@@ -73,7 +73,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             <div className="space-y-1.5">
               {AVAILABLE_MODELS.map((model) => {
                 const isSelected = model.id === selectedModelId;
-                const badge = getProviderBadge(model.provider);
+                const badge = getProviderTag(model.provider);
                 const hasKey = hasKeyForProvider(model.provider);
 
                 return (
@@ -83,39 +83,39 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                       onSelectModel(model.id);
                       setIsOpen(false);
                     }}
-                    className={`p-2.5 rounded-lg cursor-pointer transition-all border ${
+                    className={`p-2.5 rounded-xl cursor-pointer transition-all border ${
                       isSelected
-                        ? 'bg-primary/10 border-primary/40 shadow-glow-cyan/10'
-                        : 'hover:bg-secondary/60 border-transparent'
+                        ? 'bg-indigo-500/10 border-indigo-500/40 shadow-sm'
+                        : 'hover:bg-white/[0.03] border-transparent'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-white">{model.name}</span>
+                        <span className="text-xs font-bold text-white">{model.name}</span>
                         {model.recommended && (
-                          <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-neon-cyan/20 text-neon-cyan font-bold">
+                          <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-300 font-bold">
                             TOP VIBE
                           </span>
                         )}
                       </div>
                       {isSelected ? (
-                        <Check className="w-3.5 h-3.5 text-neon-cyan" />
+                        <Check className="w-3.5 h-3.5 text-cyan-400" />
                       ) : !hasKey && model.provider !== 'ollama' ? (
-                        <span className="text-[10px] text-amber-400">Requires Key</span>
+                        <span className="text-[10px] text-amber-400 font-mono">Requires Key</span>
                       ) : null}
                     </div>
 
-                    <p className="text-[11px] text-gray-400 mt-1 line-clamp-1">{model.description}</p>
+                    <p className="text-[11px] text-gray-400 mt-1 line-clamp-1 leading-relaxed">{model.description}</p>
 
-                    <div className="flex items-center gap-2 mt-2 pt-1 border-t border-border/40 text-[10px]">
-                      <span className={`px-1.5 py-0.5 rounded border ${badge.color}`}>
+                    <div className="flex items-center gap-2 mt-2 pt-1.5 border-t border-white/[0.04] text-[10px]">
+                      <span className={`px-1.5 py-0.5 rounded-md border ${badge.color}`}>
                         {badge.label}
                       </span>
-                      <span className="text-gray-400 flex items-center gap-1">
+                      <span className="text-gray-400 flex items-center gap-1 font-mono">
                         <Zap className="w-2.5 h-2.5" />
                         {model.contextWindow}
                       </span>
-                      <span className="text-gray-400 flex items-center gap-1 ml-auto">
+                      <span className="text-gray-400 flex items-center gap-1 ml-auto font-mono">
                         <Cpu className="w-2.5 h-2.5" />
                         {model.speed}
                       </span>

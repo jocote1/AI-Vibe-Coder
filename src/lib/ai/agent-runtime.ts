@@ -15,7 +15,7 @@ export class AutonomousAgentRuntime {
   private keys: ProviderKeys;
   private modelId: string;
   private abortController: AbortController | null = null;
-  private maxTurns = 20;
+  private maxTurns = 40;
 
   constructor(projectDir: string, modelId: string, keys: ProviderKeys) {
     this.projectDir = projectDir;
@@ -60,6 +60,7 @@ export class AutonomousAgentRuntime {
 
     let currentTurn = 0;
     let finalAssistantText = '';
+    let hasCreatedFiles = false;
 
     while (currentTurn < this.maxTurns) {
       if (this.abortController.signal.aborted) {
@@ -68,7 +69,7 @@ export class AutonomousAgentRuntime {
       }
 
       currentTurn++;
-      callbacks.onStatusUpdate?.(`AI is reasoning (Turn ${currentTurn}/${this.maxTurns})...`);
+      callbacks.onStatusUpdate?.(`Autonomous Agent Building (Step ${currentTurn}/${this.maxTurns})...`);
 
       let turnText = '';
       const turnEvent = await UniversalProviderRouter.callModel(
@@ -102,9 +103,41 @@ export class AutonomousAgentRuntime {
         })) : undefined,
       });
 
-      // If no tool calls were requested, the model has completed its response
+      // Autonomous Continuation Check 1: Model hit token length cutoff
+      if (turnEvent.finishReason === 'length') {
+        callbacks.onStatusUpdate?.('Token limit reached — auto-continuing generation...');
+        this.messages.push({
+          role: 'user',
+          content: 'Please continue directly from where you were cut off without repeating code.',
+        });
+        continue;
+      }
+
+      // Autonomous Continuation Check 2: Model explained plan or did a read-only scan but hasn't created the requested files yet
+      const indicatesPendingWork = /(?:let me (?:now )?(?:create|write|implement|build)|next,? (?:i will|we will|let's)|i will now|now i'll create|now we need to create|now let's create)/i.test(turnText);
+      const isCreationPrompt = /(?:create|build|generate|make|write|add|code|implement|fix)/i.test(userPrompt);
+
       if (modelToolCalls.length === 0) {
-        callbacks.onStatusUpdate?.('Task completed successfully! ✨');
+        if (!hasCreatedFiles && isCreationPrompt && currentTurn <= 3) {
+          callbacks.onStatusUpdate?.('Auto-prompting agent to write project files...');
+          this.messages.push({
+            role: 'user',
+            content: 'Please proceed now to create all the code and project files in the workspace using the write_file tool.',
+          });
+          continue;
+        }
+
+        if (indicatesPendingWork && currentTurn < 10) {
+          callbacks.onStatusUpdate?.('Auto-continuing with next step in plan...');
+          this.messages.push({
+            role: 'user',
+            content: 'Please continue immediately with the next step and write the necessary files.',
+          });
+          continue;
+        }
+
+        // If no more tools and no pending work indicated, task is complete!
+        callbacks.onStatusUpdate?.('Application built & ready! ✨');
         break;
       }
 
@@ -125,6 +158,9 @@ export class AutonomousAgentRuntime {
           const toolResult = await this.dispatchTool(toolCall.name, toolCall.parameters, toolCall.id);
           toolCall.status = 'completed';
           toolCall.result = toolResult;
+          if (toolCall.name === 'write_file' || toolCall.name === 'apply_patch_diff') {
+            hasCreatedFiles = true;
+          }
           callbacks.onToolCallComplete?.(toolCall);
           executedToolCalls.push(toolCall);
 

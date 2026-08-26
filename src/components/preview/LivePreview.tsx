@@ -7,10 +7,11 @@ import {
   ExternalLink, 
   ZoomIn, 
   ZoomOut, 
-  Globe, 
   Loader2,
   FileCode,
-  Server
+  Server,
+  Lock,
+  ShieldCheck
 } from 'lucide-react';
 
 interface LivePreviewProps {
@@ -33,7 +34,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [key, setKey] = useState(0);
 
-  // Static HTML Rendering State
+  // Static HTML State
   const [staticHtmlContent, setStaticHtmlContent] = useState<string>('');
   const [availableHtmlFiles, setAvailableHtmlFiles] = useState<string[]>([]);
   const [selectedHtmlFile, setSelectedHtmlFile] = useState<string>('index.html');
@@ -70,7 +71,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({
         const fullPath = `${projectDir.replace(/[/\\]+$/, '')}/${targetFile}`;
         let rawHtml = await window.electronAPI.readFile(fullPath);
 
-        // Inline referenced local CSS and JS for seamless previewing
+        // Inline referenced local CSS and JS for previewing
         const cssMatches = rawHtml.matchAll(/<link\s+[^>]*href=["']([^"']+\.css)["'][^>]*>/gi);
         for (const match of cssMatches) {
           const cssRel = match[1].replace(/^\.?\//, '');
@@ -106,7 +107,7 @@ export const LivePreview: React.FC<LivePreviewProps> = ({
     loadStaticHtml();
   }, [loadStaticHtml]);
 
-  // Periodic poll to refresh preview when files are modified by the agent
+  // Periodic poll to refresh preview when files change
   useEffect(() => {
     const interval = setInterval(() => {
       if (projectDir) {
@@ -159,34 +160,40 @@ export const LivePreview: React.FC<LivePreviewProps> = ({
   const dimensions = getViewportDimensions();
 
   return (
-    <div className="flex flex-col h-full bg-card/40 backdrop-blur-md rounded-2xl border border-border overflow-hidden">
-      {/* Top Controls Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-card/70 border-b border-border text-xs">
-        {/* Mode Selector & Address Bar */}
-        <div className="flex items-center gap-1.5 flex-1 min-w-[280px]">
+    <div className="flex flex-col h-full glass-panel rounded-2xl overflow-hidden shadow-2xl">
+      {/* Browser Chrome Window Header */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 bg-surface/80 border-b border-white/[0.06] text-xs select-none">
+        {/* Left: Window Dots & Navigation */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
+            <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+          </div>
+
           {/* Mode Switcher */}
-          <div className="flex items-center bg-secondary/80 rounded-lg p-0.5 border border-border/60">
+          <div className="flex items-center bg-black/40 rounded-lg p-0.5 border border-white/[0.06]">
             <button
               onClick={() => {
                 setPreviewMode('static-html');
                 loadStaticHtml();
               }}
-              className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
                 isUsingStatic
-                  ? 'bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/30 shadow-sm'
+                  ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shadow-sm'
                   : 'text-gray-400 hover:text-white'
               }`}
-              title="Preview Static HTML / Canvas / Game directly from project"
+              title="Preview HTML / Canvas / Game directly from project"
             >
               <FileCode className="w-3.5 h-3.5" />
-              <span>HTML / App</span>
+              <span>HTML Live</span>
             </button>
 
             <button
               onClick={() => setPreviewMode('server')}
-              className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
                 !isUsingStatic
-                  ? 'bg-primary/20 text-primary border border-primary/30 shadow-sm'
+                  ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 shadow-sm'
                   : 'text-gray-400 hover:text-white'
               }`}
               title="Connect to Dev Server (e.g. localhost:5173)"
@@ -195,11 +202,14 @@ export const LivePreview: React.FC<LivePreviewProps> = ({
               <span>Dev Server</span>
             </button>
           </div>
+        </div>
 
+        {/* Center: URL Pill Address Bar */}
+        <div className="flex-1 max-w-md mx-2">
           {isUsingStatic ? (
-            /* HTML File Selector */
-            <div className="flex items-center flex-1 bg-background/90 rounded-lg border border-border/80 px-2.5 py-1">
-              <span className="text-[10px] text-neon-cyan font-mono mr-1.5 font-bold">FILE:</span>
+            <div className="flex items-center bg-black/40 rounded-lg border border-white/[0.06] px-3 py-1 text-xs">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 mr-2 flex-shrink-0" />
+              <span className="text-[10px] text-gray-400 font-mono mr-1.5 font-bold">LOCAL:</span>
               {availableHtmlFiles.length > 0 ? (
                 <select
                   value={selectedHtmlFile}
@@ -207,27 +217,26 @@ export const LivePreview: React.FC<LivePreviewProps> = ({
                   className="bg-transparent text-[11px] text-gray-200 focus:outline-none flex-1 font-mono cursor-pointer"
                 >
                   {availableHtmlFiles.map((file) => (
-                    <option key={file} value={file} className="bg-card text-white">
+                    <option key={file} value={file} className="bg-[#11141d] text-white">
                       {file}
                     </option>
                   ))}
                 </select>
               ) : (
-                <span className="text-[11px] text-gray-400 font-mono truncate">
-                  No .html file found in workspace
+                <span className="text-[11px] text-gray-500 font-mono truncate">
+                  No HTML file in workspace
                 </span>
               )}
             </div>
           ) : (
-            /* Server URL Bar */
-            <form onSubmit={handleUrlSubmit} className="flex items-center flex-1 bg-background/90 rounded-lg border border-border/80 px-2.5 py-1 focus-within:border-primary/60 transition-all">
-              <Globe className="w-3.5 h-3.5 text-primary mr-1.5 flex-shrink-0" />
+            <form onSubmit={handleUrlSubmit} className="flex items-center bg-black/40 rounded-lg border border-white/[0.06] px-3 py-1 focus-within:border-indigo-500/60 transition-all">
+              <Lock className="w-3 h-3 text-gray-400 mr-2 flex-shrink-0" />
               <input
                 type="text"
                 value={inputUrl}
                 onChange={(e) => setInputUrl(e.target.value)}
                 placeholder="http://localhost:5173"
-                className="flex-1 bg-transparent text-[11px] text-gray-200 focus:outline-none"
+                className="flex-1 bg-transparent text-[11px] text-gray-200 focus:outline-none font-mono"
               />
               <button type="submit" className="text-[10px] text-gray-400 hover:text-white px-1 font-mono">
                 GO
@@ -236,73 +245,73 @@ export const LivePreview: React.FC<LivePreviewProps> = ({
           )}
         </div>
 
-        {/* Viewport & Actions */}
+        {/* Right: Viewport & Zoom Controls */}
         <div className="flex items-center gap-1.5">
-          {/* Viewport Toggles */}
-          <div className="flex items-center bg-secondary/80 rounded-lg p-0.5 border border-border/60">
+          {/* Viewport Modes */}
+          <div className="flex items-center bg-black/40 rounded-lg p-0.5 border border-white/[0.06]">
             <button
               onClick={() => setViewport('desktop')}
               className={`p-1.5 rounded-md transition-all ${
-                viewport === 'desktop' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-white'
+                viewport === 'desktop' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-400 hover:text-white'
               }`}
-              title="Desktop View (100%)"
+              title="Desktop (100%)"
             >
               <Monitor className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setViewport('tablet')}
               className={`p-1.5 rounded-md transition-all ${
-                viewport === 'tablet' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-white'
+                viewport === 'tablet' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-400 hover:text-white'
               }`}
-              title="Tablet View (768x1024)"
+              title="Tablet (768x1024)"
             >
               <Tablet className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setViewport('mobile')}
               className={`p-1.5 rounded-md transition-all ${
-                viewport === 'mobile' ? 'bg-primary text-white shadow-sm' : 'text-gray-400 hover:text-white'
+                viewport === 'mobile' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-400 hover:text-white'
               }`}
-              title="Mobile View (375x667)"
+              title="Mobile (375x667)"
             >
               <Smartphone className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* Zoom Controls */}
-          <div className="flex items-center gap-1">
+          {/* Zoom */}
+          <div className="flex items-center gap-1 bg-black/40 rounded-lg px-2 py-0.5 border border-white/[0.06]">
             <button
               onClick={() => setZoom(Math.max(50, zoom - 15))}
-              className="p-1.5 rounded-lg bg-secondary hover:bg-secondary/70 text-gray-300 border border-border"
+              className="text-gray-400 hover:text-white"
               title="Zoom Out"
             >
-              <ZoomOut className="w-3.5 h-3.5" />
+              <ZoomOut className="w-3 h-3" />
             </button>
-            <span className="text-[10px] font-mono text-gray-400 min-w-[28px] text-center">
+            <span className="text-[10px] font-mono text-gray-300 min-w-[28px] text-center">
               {zoom}%
             </span>
             <button
               onClick={() => setZoom(Math.min(150, zoom + 15))}
-              className="p-1.5 rounded-lg bg-secondary hover:bg-secondary/70 text-gray-300 border border-border"
+              className="text-gray-400 hover:text-white"
               title="Zoom In"
             >
-              <ZoomIn className="w-3.5 h-3.5" />
+              <ZoomIn className="w-3 h-3" />
             </button>
           </div>
 
           {/* Refresh */}
           <button
             onClick={handleRefresh}
-            className="p-1.5 rounded-lg bg-secondary hover:bg-secondary/70 text-gray-300 border border-border transition-transform active:rotate-180"
-            title="Refresh Preview"
+            className="p-1.5 rounded-lg bg-black/40 hover:bg-white/5 text-gray-300 border border-white/[0.06] transition-transform active:rotate-180"
+            title="Refresh"
           >
-            <RotateCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-neon-cyan' : ''}`} />
+            <RotateCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-cyan-400' : ''}`} />
           </button>
 
           {!isUsingStatic && (
             <button
               onClick={openInBrowser}
-              className="p-1.5 rounded-lg bg-secondary hover:bg-secondary/70 text-gray-300 border border-border"
+              className="p-1.5 rounded-lg bg-black/40 hover:bg-white/5 text-gray-300 border border-white/[0.06]"
               title="Open in Browser"
             >
               <ExternalLink className="w-3.5 h-3.5" />
@@ -311,8 +320,8 @@ export const LivePreview: React.FC<LivePreviewProps> = ({
         </div>
       </div>
 
-      {/* Preview Stage / Frame */}
-      <div className="flex-1 bg-background/95 p-4 flex items-center justify-center overflow-auto relative">
+      {/* Preview Canvas Stage */}
+      <div className="flex-1 bg-[#090b10] p-4 flex items-center justify-center overflow-auto relative">
         <div
           style={{
             width: dimensions.width,
@@ -321,14 +330,14 @@ export const LivePreview: React.FC<LivePreviewProps> = ({
             transformOrigin: 'top center',
             transition: 'width 0.3s ease, height 0.3s ease, transform 0.2s ease',
           }}
-          className={`relative bg-white rounded-xl shadow-2xl overflow-hidden border ${
-            viewport !== 'desktop' ? 'border-border shadow-glow-purple/20' : 'border-transparent'
+          className={`relative bg-white rounded-xl shadow-2xl overflow-hidden ${
+            viewport !== 'desktop' ? 'border border-white/10 ring-1 ring-black/50' : ''
           }`}
         >
           {isLoading && (
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 space-y-2">
-              <Loader2 className="w-6 h-6 text-neon-cyan animate-spin" />
-              <span className="text-xs text-gray-300 font-medium">Hot-Reloading Preview...</span>
+            <div className="absolute inset-0 bg-[#0a0c10]/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 space-y-2">
+              <Loader2 className="w-6 h-6 text-cyan-400 animate-spin" />
+              <span className="text-xs text-gray-300 font-medium font-mono">Hot-Reloading Preview...</span>
             </div>
           )}
 
@@ -343,12 +352,12 @@ export const LivePreview: React.FC<LivePreviewProps> = ({
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
               />
             ) : (
-              <div className="w-full h-full bg-[#090a0f] flex flex-col items-center justify-center text-center p-6 text-gray-400 space-y-3">
-                <FileCode className="w-12 h-12 text-neon-cyan/40 stroke-1" />
+              <div className="w-full h-full bg-[#0a0c10] flex flex-col items-center justify-center text-center p-6 text-gray-400 space-y-3">
+                <FileCode className="w-12 h-12 text-cyan-400/30 stroke-1" />
                 <div className="max-w-xs space-y-1">
-                  <div className="text-xs font-bold text-white">Live HTML & App Preview Ready</div>
-                  <p className="text-[11px] text-gray-500">
-                    Ask the agent to build an HTML game, dashboard, or UI. It will appear right here in real-time.
+                  <div className="text-xs font-bold text-white tracking-wide">Live Preview Ready</div>
+                  <p className="text-[11px] text-gray-400 leading-relaxed">
+                    Ask the agent to build an HTML game, dashboard, or UI. It renders right here with live hot-reloading.
                   </p>
                 </div>
               </div>

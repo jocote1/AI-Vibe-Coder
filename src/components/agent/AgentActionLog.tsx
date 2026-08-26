@@ -11,7 +11,8 @@ import {
   ChevronDown, 
   ChevronRight,
   GitCommit,
-  Flame
+  Flame,
+  FilePlus2
 } from 'lucide-react';
 
 interface AgentActionLogProps {
@@ -27,112 +28,120 @@ export const AgentActionLog: React.FC<AgentActionLogProps> = ({ toolCalls }) => 
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const getToolIcon = (name: string) => {
-    switch (name) {
-      case 'read_directory_tree':
-        return <FolderTree className="w-4 h-4 text-neon-cyan" />;
-      case 'read_file':
-        return <FileCode className="w-4 h-4 text-neon-purple" />;
-      case 'write_file':
-        return <FileCode className="w-4 h-4 text-neon-green" />;
-      case 'apply_patch_diff':
-        return <GitCommit className="w-4 h-4 text-neon-amber" />;
-      case 'execute_terminal_command':
-        return <Terminal className="w-4 h-4 text-blue-400" />;
-      case 'auto_heal_error':
-        return <Flame className="w-4 h-4 text-neon-pink animate-pulse" />;
-      default:
-        return <Sparkles className="w-4 h-4 text-primary" />;
-    }
-  };
-
-  const getToolTitle = (tc: ToolCall) => {
+  const getToolMeta = (tc: ToolCall) => {
     switch (tc.name) {
       case 'read_directory_tree':
-        return `Scanning Project Structure: ${tc.parameters?.path || 'Root'}`;
+        return {
+          icon: <FolderTree className="w-3.5 h-3.5 text-cyan-400" />,
+          title: `Scanned directory structure (${tc.parameters?.path || 'workspace root'})`,
+          badge: 'Tree Scan',
+        };
       case 'read_file':
-        return `Reading File: ${tc.parameters?.path || 'Unknown'}`;
+        return {
+          icon: <FileCode className="w-3.5 h-3.5 text-purple-400" />,
+          title: `Read ${tc.parameters?.path || 'source file'}`,
+          badge: 'Read',
+        };
       case 'write_file':
-        return `Writing File: ${tc.parameters?.path || 'Unknown'}`;
+        return {
+          icon: <FilePlus2 className="w-3.5 h-3.5 text-emerald-400" />,
+          title: `Wrote ${tc.parameters?.path || 'file'}`,
+          badge: 'Write',
+        };
       case 'apply_patch_diff':
-        return `Surgically Patching: ${tc.parameters?.path || 'Unknown'}`;
+        return {
+          icon: <GitCommit className="w-3.5 h-3.5 text-amber-400" />,
+          title: `Patched ${tc.parameters?.path || 'file'}`,
+          badge: 'Patch',
+        };
       case 'execute_terminal_command':
-        return `Executing: ${tc.parameters?.command || 'Shell Command'}`;
+        return {
+          icon: <Terminal className="w-3.5 h-3.5 text-blue-400" />,
+          title: `$ ${tc.parameters?.command || 'command'}`,
+          badge: 'Command',
+        };
       case 'auto_heal_error':
-        return `Auto-Healing Error Detected in Compiler/Runtime`;
+        return {
+          icon: <Flame className="w-3.5 h-3.5 text-rose-400 animate-pulse" />,
+          title: `Auto-Healed error diagnostics`,
+          badge: 'Self-Heal',
+        };
       default:
-        return `Invoking: ${tc.name}`;
+        return {
+          icon: <Sparkles className="w-3.5 h-3.5 text-indigo-400" />,
+          title: `Invoked ${tc.name}`,
+          badge: 'Tool',
+        };
     }
   };
 
   return (
-    <div className="space-y-2.5 my-3">
+    <div className="space-y-2 my-2.5">
       {toolCalls.map((tc) => {
         const isExpanded = expandedId === tc.id;
+        const meta = getToolMeta(tc);
 
         return (
           <div
             key={tc.id}
             className={`rounded-xl border transition-all text-xs overflow-hidden backdrop-blur-md ${
               tc.status === 'running'
-                ? 'border-primary/50 bg-primary/5 shadow-glow-purple/10'
+                ? 'border-indigo-500/40 bg-indigo-500/[0.04]'
                 : tc.status === 'failed'
-                ? 'border-neon-pink/40 bg-neon-pink/5'
-                : tc.name === 'auto_heal_error'
-                ? 'border-neon-pink/30 bg-neon-pink/10'
-                : 'border-border/80 bg-card/60 hover:border-border'
+                ? 'border-rose-500/40 bg-rose-500/[0.04]'
+                : 'border-white/[0.07] bg-black/20 hover:border-white/[0.12]'
             }`}
           >
-            {/* Header / Click to Expand */}
+            {/* Header Item */}
             <div
               onClick={() => toggleExpand(tc.id)}
-              className="flex items-center justify-between p-2.5 cursor-pointer select-none"
+              className="flex items-center justify-between px-3 py-2 cursor-pointer select-none"
             >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="p-1 rounded-lg bg-secondary/80 border border-border/60">
-                  {getToolIcon(tc.name)}
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="p-1 rounded-md bg-white/[0.04] border border-white/[0.06]">
+                  {meta.icon}
                 </div>
-                <span className="font-semibold text-gray-200 truncate">
-                  {getToolTitle(tc)}
+                <span className="font-medium text-gray-200 truncate font-mono text-[11px]">
+                  {meta.title}
                 </span>
               </div>
 
               <div className="flex items-center gap-2 ml-2 flex-shrink-0">
                 {tc.status === 'running' && (
-                  <span className="flex items-center gap-1 text-[11px] text-primary font-medium">
+                  <span className="flex items-center gap-1 text-[10px] text-cyan-400 font-medium font-mono">
                     <Loader2 className="w-3 h-3 animate-spin" />
                     Running
                   </span>
                 )}
                 {tc.status === 'completed' && (
-                  <span className="flex items-center gap-1 text-[11px] text-neon-green font-medium">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-medium font-mono">
+                    <CheckCircle2 className="w-3 h-3" />
                     Done
                   </span>
                 )}
                 {tc.status === 'failed' && (
-                  <span className="flex items-center gap-1 text-[11px] text-neon-pink font-medium">
-                    <AlertTriangle className="w-3.5 h-3.5" />
+                  <span className="flex items-center gap-1 text-[10px] text-rose-400 font-medium font-mono">
+                    <AlertTriangle className="w-3 h-3" />
                     Failed
                   </span>
                 )}
                 {isExpanded ? (
-                  <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                  <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
                 ) : (
-                  <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+                  <ChevronRight className="w-3.5 h-3.5 text-gray-500" />
                 )}
               </div>
             </div>
 
-            {/* Expanded Details / Diff Viewer / Output */}
+            {/* Expanded Accordion Body */}
             {isExpanded && (
-              <div className="p-3 border-t border-border/60 bg-background/70 space-y-2 font-mono">
+              <div className="px-3 pb-3 pt-1 border-t border-white/[0.06] bg-black/30 space-y-2 font-mono text-[11px]">
                 {/* Parameters */}
                 <div>
-                  <div className="text-[10px] text-gray-400 uppercase font-sans tracking-wider mb-1">
+                  <div className="text-[9px] text-gray-500 uppercase tracking-wider font-sans mb-1">
                     Parameters
                   </div>
-                  <pre className="p-2 rounded bg-card border border-border/50 text-[11px] text-gray-300 overflow-x-auto">
+                  <pre className="p-2 rounded-lg bg-black/50 border border-white/[0.05] text-gray-300 overflow-x-auto whitespace-pre">
                     {JSON.stringify(tc.parameters, null, 2)}
                   </pre>
                 </div>
@@ -140,15 +149,15 @@ export const AgentActionLog: React.FC<AgentActionLogProps> = ({ toolCalls }) => 
                 {/* Diff Viewer for apply_patch_diff */}
                 {tc.name === 'apply_patch_diff' && (
                   <div className="space-y-1">
-                    <div className="text-[10px] text-gray-400 uppercase font-sans tracking-wider">
-                      Patch Diff Details
+                    <div className="text-[9px] text-gray-500 uppercase tracking-wider font-sans">
+                      Patch Diff
                     </div>
-                    <div className="p-2 rounded bg-red-950/20 border border-red-900/40 text-[11px] text-red-300 overflow-x-auto">
-                      <div className="text-[10px] text-red-400 font-sans font-bold mb-1">- Target Chunk (Search)</div>
+                    <div className="p-2 rounded-lg bg-rose-950/30 border border-rose-900/40 text-rose-300 overflow-x-auto">
+                      <div className="text-[9px] text-rose-400 font-sans font-bold mb-0.5">- Search Chunk</div>
                       <pre className="whitespace-pre-wrap">{tc.parameters.search_chunk}</pre>
                     </div>
-                    <div className="p-2 rounded bg-emerald-950/20 border border-emerald-900/40 text-[11px] text-emerald-300 overflow-x-auto">
-                      <div className="text-[10px] text-emerald-400 font-sans font-bold mb-1">+ Replacement Chunk</div>
+                    <div className="p-2 rounded-lg bg-emerald-950/30 border border-emerald-900/40 text-emerald-300 overflow-x-auto">
+                      <div className="text-[9px] text-emerald-400 font-sans font-bold mb-0.5">+ Replace Chunk</div>
                       <pre className="whitespace-pre-wrap">{tc.parameters.replace_chunk}</pre>
                     </div>
                   </div>
@@ -156,25 +165,22 @@ export const AgentActionLog: React.FC<AgentActionLogProps> = ({ toolCalls }) => 
 
                 {/* Auto Heal Error Explanation */}
                 {tc.name === 'auto_heal_error' && (
-                  <div className="p-2.5 rounded bg-neon-pink/10 border border-neon-pink/30 space-y-1.5 font-sans">
-                    <div className="text-neon-pink font-bold text-xs flex items-center gap-1.5">
+                  <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 space-y-1 font-sans">
+                    <div className="text-rose-400 font-bold text-xs flex items-center gap-1">
                       <Flame className="w-3.5 h-3.5" />
-                      Self-Healing Diagnosis Applied:
+                      Self-Healing Diagnosis Applied
                     </div>
                     <p className="text-gray-300 text-xs">{tc.parameters.suggested_fix}</p>
-                    <div className="text-[10px] text-gray-400 font-mono mt-1 pt-1 border-t border-neon-pink/20 truncate">
-                      Intercepted Logs: {tc.parameters.error_logs?.slice(0, 180)}...
-                    </div>
                   </div>
                 )}
 
-                {/* Results / Error Output */}
+                {/* Results / Outputs */}
                 {tc.result && (
                   <div>
-                    <div className="text-[10px] text-gray-400 uppercase font-sans tracking-wider mb-1">
-                      Execution Result
+                    <div className="text-[9px] text-gray-500 uppercase tracking-wider font-sans mb-1">
+                      Result
                     </div>
-                    <pre className="p-2 rounded bg-card border border-border/50 text-[11px] text-emerald-400 overflow-x-auto max-h-48 overflow-y-auto">
+                    <pre className="p-2 rounded-lg bg-black/50 border border-white/[0.05] text-emerald-400 overflow-x-auto max-h-36 overflow-y-auto whitespace-pre-wrap">
                       {typeof tc.result === 'string' ? tc.result : JSON.stringify(tc.result, null, 2)}
                     </pre>
                   </div>
@@ -182,10 +188,10 @@ export const AgentActionLog: React.FC<AgentActionLogProps> = ({ toolCalls }) => 
 
                 {tc.error && (
                   <div>
-                    <div className="text-[10px] text-neon-pink uppercase font-sans tracking-wider mb-1">
-                      Error Log
+                    <div className="text-[9px] text-rose-400 uppercase tracking-wider font-sans mb-1">
+                      Error Output
                     </div>
-                    <pre className="p-2 rounded bg-neon-pink/10 border border-neon-pink/30 text-[11px] text-neon-pink overflow-x-auto max-h-48 overflow-y-auto">
+                    <pre className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 overflow-x-auto max-h-36 overflow-y-auto">
                       {tc.error}
                     </pre>
                   </div>

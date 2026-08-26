@@ -237,43 +237,43 @@ export const App: React.FC = () => {
   const activeModel = AVAILABLE_MODELS.find((m) => m.id === selectedModelId) || AVAILABLE_MODELS[0];
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-background text-gray-100 overflow-hidden font-sans select-none">
+    <div className="flex flex-col h-screen w-screen bg-vibe-mesh text-gray-100 overflow-hidden font-sans select-none">
       {/* 🚀 Top Navigation Toolbar */}
-      <header className="h-13 bg-card/90 border-b border-border flex items-center justify-between px-4 z-30 backdrop-blur-xl">
-        {/* Brand Logo & Vibe Status */}
+      <header className="h-12 bg-surface/90 border-b border-white/[0.06] flex items-center justify-between px-4 z-30 backdrop-blur-2xl">
+        {/* Brand Logo & Project Breadcrumb */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-primary via-neon-purple to-neon-cyan p-0.5 shadow-glow-cyan">
-              <div className="w-full h-full bg-background rounded-[10px] flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-neon-cyan animate-pulse" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-500 to-cyan-400 p-0.5 shadow-sm shadow-indigo-500/20">
+              <div className="w-full h-full bg-[#0a0c10] rounded-[6px] flex items-center justify-center">
+                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
               </div>
             </div>
-            <div>
-              <span className="font-extrabold text-sm tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-neon-cyan via-primary to-neon-purple">
-                VIBE-STUDIO
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-xs tracking-wider text-white">
+                VIBE STUDIO
               </span>
-              <span className="text-[9px] ml-1.5 px-1.5 py-0.2 rounded bg-neon-cyan/10 text-neon-cyan font-bold border border-neon-cyan/20">
+              <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/[0.06] text-gray-400 font-mono">
                 v1.0
               </span>
             </div>
           </div>
 
-          <div className="h-4 w-px bg-border/80 mx-1 hidden sm:block" />
+          <div className="h-4 w-px bg-white/[0.08] mx-1 hidden sm:block" />
 
           {/* New Project Button */}
           <button
             onClick={() => setIsNewProjectModalOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-neon-cyan/10 hover:bg-neon-cyan/20 border border-neon-cyan/30 text-xs text-neon-cyan font-bold transition-all shadow-sm"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-xs text-indigo-300 font-semibold transition-all shadow-sm"
             title="Start New Project Folder"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">New</span>
+            <span className="hidden md:inline text-[11px]">New Project</span>
           </button>
 
           {/* Workspace Folder Picker */}
           <button
             onClick={handleOpenFolder}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/80 hover:bg-secondary border border-border text-xs text-gray-200 hover:text-white transition-all max-w-[200px]"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/40 hover:bg-white/[0.04] border border-white/[0.08] text-xs text-gray-300 hover:text-white transition-all max-w-[180px]"
             title={projectDir || 'Select Project Directory'}
           >
             <FolderOpen className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
@@ -296,46 +296,46 @@ export const App: React.FC = () => {
           {/* Code Explorer / File Tree Modal */}
           <button
             onClick={() => setIsEditorModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary/80 hover:bg-secondary border border-border text-xs text-gray-200 hover:text-white transition-all"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/40 hover:bg-white/[0.04] border border-white/[0.08] text-xs text-gray-300 hover:text-white transition-all"
             title="Browse Files & Code"
           >
-            <FileCode className="w-3.5 h-3.5 text-neon-purple" />
-            <span className="hidden md:inline font-medium">Files</span>
+            <FileCode className="w-3.5 h-3.5 text-purple-400" />
+            <span className="hidden md:inline text-[11px] font-medium">Files</span>
           </button>
 
           {/* One-Click Export Modal */}
           <button
             onClick={() => setIsExportModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/20 hover:bg-primary/30 border border-primary/40 text-xs text-white transition-all shadow-glow-purple/20 font-bold"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-600/90 hover:bg-indigo-500 text-xs text-white transition-all shadow-sm shadow-indigo-600/30 font-semibold"
             title="One-Click .EXE / .ZIP / .JAR Exporter"
           >
-            <Download className="w-3.5 h-3.5 text-neon-cyan" />
-            <span className="hidden sm:inline">Export Studio</span>
+            <Download className="w-3.5 h-3.5 text-white" />
+            <span className="hidden sm:inline text-[11px]">Export</span>
           </button>
 
           {/* Google Cloud PKCE Login */}
           <button
             onClick={() => setIsOAuthModalOpen(true)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs transition-all ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs transition-all ${
               keys.googleOAuthToken
-                ? 'bg-emerald-950/30 border-emerald-900/60 text-neon-green font-semibold'
-                : 'bg-secondary/80 hover:bg-secondary border-border text-gray-300'
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-medium'
+                : 'bg-black/40 hover:bg-white/[0.04] border-white/[0.08] text-gray-300'
             }`}
             title="Google Cloud & Vertex AI OAuth PKCE"
           >
             <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-            <span className="hidden lg:inline">
-              {keys.googleOAuthToken ? 'Vertex AI Active' : 'OAuth PKCE'}
+            <span className="hidden lg:inline text-[11px]">
+              {keys.googleOAuthToken ? 'Vertex AI' : 'OAuth'}
             </span>
           </button>
 
           {/* BYOK Settings Modal */}
           <button
             onClick={() => setIsSettingsModalOpen(true)}
-            className="p-1.5 rounded-lg bg-secondary/80 hover:bg-secondary border border-border text-gray-400 hover:text-white transition-all"
+            className="p-1.5 rounded-lg bg-black/40 hover:bg-white/[0.04] border border-white/[0.08] text-gray-400 hover:text-white transition-all"
             title="API Keys & Settings"
           >
-            <Settings className="w-4 h-4" />
+            <Settings className="w-3.5 h-3.5" />
           </button>
         </div>
       </header>

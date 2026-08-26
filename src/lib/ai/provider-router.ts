@@ -484,6 +484,7 @@ export class UniversalProviderRouter {
     if (!reader) throw new Error('Failed to read stream.');
 
     let buffer = '';
+    let finishReason = '';
 
     while (true) {
       const { done, value } = await reader.read();
@@ -499,7 +500,12 @@ export class UniversalProviderRouter {
         if (trimmed.startsWith('data: ')) {
           try {
             const data = JSON.parse(trimmed.slice(6));
-            const delta = data.choices?.[0]?.delta;
+            const choice = data.choices?.[0];
+            const delta = choice?.delta;
+
+            if (choice?.finish_reason) {
+              finishReason = choice.finish_reason;
+            }
 
             if (delta?.content) {
               accumulatedText += delta.content;
@@ -545,6 +551,7 @@ export class UniversalProviderRouter {
     const finalEvent: StreamEvent = {
       textChunk: accumulatedText,
       toolCalls: finalToolCalls.length > 0 ? finalToolCalls : undefined,
+      finishReason,
     };
     onChunk(finalEvent);
     return finalEvent;

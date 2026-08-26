@@ -3,16 +3,55 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --bg-primary: #0a0c10;
+    --bg-surface: #11141d;
+    --bg-subtle: #171c28;
+    --border-color: rgba(255, 255, 255, 0.08);
+  }
+
   body {
-    @apply bg-background text-gray-100 antialiased overflow-hidden select-none;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background-color: var(--bg-primary);
+    color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    user-select: none;
+    overflow: hidden;
   }
 }
 
-/* Custom scrollbars */
+/* Crafted Glass & Glow Utilities */
+.glass-panel {
+  background: rgba(17, 20, 29, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.glass-card {
+  background: rgba(23, 28, 40, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 25px -4px rgba(34, 211, 238, 0.25);
+}
+
+.glow-purple {
+  box-shadow: 0 0 25px -4px rgba(168, 85, 247, 0.25);
+}
+
+.glow-primary {
+  box-shadow: 0 0 25px -4px rgba(99, 102, 241, 0.3);
+}
+
+/* Custom Sleek Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -20,23 +59,18 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
 }
 
-/* Glowing Neon Utilities */
-.shadow-glow-cyan {
-  box-shadow: 0 0 20px -3px rgba(34, 211, 238, 0.4);
-}
-
-.shadow-glow-purple {
-  box-shadow: 0 0 20px -3px rgba(168, 85, 247, 0.4);
-}
-
-.shadow-glow-pink {
-  box-shadow: 0 0 20px -3px rgba(244, 63, 94, 0.4);
+/* Subtly animated background glow */
+.bg-vibe-mesh {
+  background: 
+    radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(34, 211, 238, 0.04) 0%, transparent 40%),
+    #0a0c10;
 }
