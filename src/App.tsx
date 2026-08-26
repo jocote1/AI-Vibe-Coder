@@ -7,6 +7,7 @@ import { ExportModal } from './components/export/ExportModal';
 import { ApiKeyManager } from './components/settings/ApiKeyManager';
 import { OAuthLoginModal } from './components/settings/OAuthLoginModal';
 import { CodeEditorModal } from './components/editor/CodeEditorModal';
+import { NewProjectModal, TEMPLATES } from './components/project/NewProjectModal';
 import { AutonomousAgentRuntime } from './lib/ai/agent-runtime';
 import { AVAILABLE_MODELS } from './lib/ai/provider-router';
 import { ChatMessage, ProviderKeys, ToolCall } from './types/ai';
@@ -17,7 +18,8 @@ import {
   Sparkles, 
   FileCode, 
   ShieldCheck, 
-  X 
+  X,
+  Plus
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -38,6 +40,8 @@ export const App: React.FC = () => {
   const [isOAuthModalOpen, setIsOAuthModalOpen] = useState<boolean>(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
   const [isEditorModalOpen, setIsEditorModalOpen] = useState<boolean>(false);
+  const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState<boolean>(false);
+  const [defaultBaseDir, setDefaultBaseDir] = useState<string>('');
 
   const agentRuntimeRef = useRef<AutonomousAgentRuntime | null>(null);
 
@@ -55,6 +59,7 @@ export const App: React.FC = () => {
           const defaultWorkspace = await window.electronAPI.getDefaultWorkspace();
           if (defaultWorkspace) {
             setProjectDir(defaultWorkspace);
+            setDefaultBaseDir(defaultWorkspace.substring(0, defaultWorkspace.lastIndexOf('/')) || defaultWorkspace);
           }
         } catch (e) {
           console.warn('Failed to load secure keys from Electron storage:', e);
@@ -68,6 +73,17 @@ export const App: React.FC = () => {
   useEffect(() => {
     agentRuntimeRef.current = new AutonomousAgentRuntime(projectDir, selectedModelId, keys);
   }, [projectDir, selectedModelId, keys]);
+
+  const handleCreateProject = (folderPath: string, templateId: string, projectName: string) => {
+    setProjectDir(folderPath);
+    setMessages([]);
+    const tmpl = TEMPLATES.find((t) => t.id === templateId);
+    if (tmpl && tmpl.starterPrompt) {
+      setTimeout(() => {
+        handleSendMessage(`Project: ${projectName}\n${tmpl.starterPrompt}`);
+      }, 300);
+    }
+  };
 
   const handleOpenFolder = async () => {
     if (window.electronAPI) {
@@ -244,15 +260,25 @@ export const App: React.FC = () => {
 
           <div className="h-4 w-px bg-border/80 mx-1 hidden sm:block" />
 
+          {/* New Project Button */}
+          <button
+            onClick={() => setIsNewProjectModalOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-neon-cyan/10 hover:bg-neon-cyan/20 border border-neon-cyan/30 text-xs text-neon-cyan font-bold transition-all shadow-sm"
+            title="Start New Project Folder"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">New</span>
+          </button>
+
           {/* Workspace Folder Picker */}
           <button
             onClick={handleOpenFolder}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/80 hover:bg-secondary border border-border text-xs text-gray-200 hover:text-white transition-all max-w-[220px]"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/80 hover:bg-secondary border border-border text-xs text-gray-200 hover:text-white transition-all max-w-[200px]"
             title={projectDir || 'Select Project Directory'}
           >
-            <FolderOpen className="w-3.5 h-3.5 text-neon-cyan flex-shrink-0" />
+            <FolderOpen className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
             <span className="truncate font-mono text-[11px]">
-              {projectDir ? projectDir.split('/').pop() || projectDir : 'Open Workspace'}
+              {projectDir ? projectDir.split('/').pop() || projectDir : 'Open'}
             </span>
           </button>
         </div>
@@ -363,6 +389,13 @@ export const App: React.FC = () => {
         isOpen={isEditorModalOpen}
         onClose={() => setIsEditorModalOpen(false)}
         projectDir={projectDir}
+      />
+
+      <NewProjectModal
+        isOpen={isNewProjectModalOpen}
+        onClose={() => setIsNewProjectModalOpen(false)}
+        onCreateProject={handleCreateProject}
+        defaultBaseDir={defaultBaseDir || '~/VibeProjects'}
       />
 
       {/* BYOK Settings Modal */}

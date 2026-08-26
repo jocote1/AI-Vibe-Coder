@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage, ToolCall } from '../../types/ai';
 import { AgentActionLog } from './AgentActionLog';
+import { MarkdownRenderer } from './MarkdownRenderer';
 import { 
   Send, 
   Square, 
@@ -150,12 +151,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <div
                 className={`max-w-[85%] rounded-2xl p-3.5 border ${
                   msg.role === 'user'
-                    ? 'bg-primary text-white border-primary/50 rounded-tr-none'
+                    ? 'bg-primary text-white border-primary/50 rounded-tr-none whitespace-pre-wrap font-sans'
                     : 'bg-card/90 text-gray-200 border-border rounded-tl-none backdrop-blur-md'
                 }`}
               >
                 {/* Text Content */}
-                <div className="whitespace-pre-wrap font-sans">{msg.content}</div>
+                {msg.role === 'user' ? (
+                  <div>{msg.content}</div>
+                ) : (
+                  <MarkdownRenderer content={msg.content} />
+                )}
 
                 {/* Embedded Tool Calls */}
                 {msg.toolCalls && msg.toolCalls.length > 0 && (
